@@ -2077,7 +2077,7 @@ html.control-glass-svg-ok #visual-guide-btn:hover{
   <div class="fx-section-label">主控</div>
   <div class="fx-slider"><label>律动强度</label><input id="fx-intensity" type="range" min="0.2" max="1.6" step="0.01"><output></output></div>
   <div class="fx-slider"><label>立体感</label><input id="fx-depth" type="range" min="0.2" max="1.8" step="0.01"><output></output></div>
-  <div class="fx-slider"><label>封面清晰度</label><input id="fx-coverres" type="range" min="0.75" max="1.55" step="0.01"><output></output></div>
+  <div class="fx-slider"><label>封面清晰度</label><input id="fx-coverres" type="range" min="0.75" max="2" step="0.01"><output></output></div>
   <div class="fx-slider"><label>镜头晃动</label><input id="fx-cineshake" type="range" min="0" max="1.8" step="0.01"><output></output></div>
   <div class="fx-slider"><label>歌词溢光</label><input id="fx-lyricglow" type="range" min="0" max="0.85" step="0.01"><output></output></div>
 
@@ -3198,13 +3198,13 @@ var fxDefaults = {
   intensity: 0.85,
   cinemaShake: 0.5,
   depth: 1.0,
-  coverResolution: 1.55,
+  coverResolution: 2,
   point: 1.0, speed: 1.0, twist: 0.0, color: 1.10, scatter: 0.0, bgFade: 0.20,
   bloomStrength: 0.62,
   lyricGlowStrength: 0.28,
   lyricScale: 1.0,
   lyricOffsetX: 0,
-  lyricOffsetY: 0,
+  lyricOffsetY: -0.32,
   lyricOffsetZ: 0,
   lyricTiltX: 0,
   lyricTiltY: 0,
@@ -3247,7 +3247,7 @@ var fxDefaults = {
   lyricCameraLock: false,
   particleLyrics: true,    // v7.2: 粒子歌词
   backCover: false,        // 旧的封面背面粒子层关闭；浮空粒子层会跟随封面翻转
-  shelf: 'side',
+  shelf: 'off',
   shelfCameraMode: 'static',
   shelfPresence: 'always',
   shelfShowPodcasts: false,
@@ -3275,7 +3275,7 @@ var PACKAGED_DEFAULT_FX_SNAPSHOT = Object.freeze({
   intensity: 0.85,
   cinemaShake: 0.5,
   depth: 1,
-  coverResolution: 1.55,
+  coverResolution: 2,
   point: 1,
   speed: 1,
   twist: 0,
@@ -3286,7 +3286,7 @@ var PACKAGED_DEFAULT_FX_SNAPSHOT = Object.freeze({
   lyricGlowStrength: 0.28,
   lyricScale: 1,
   lyricOffsetX: 0,
-  lyricOffsetY: 0,
+  lyricOffsetY: -0.32,
   lyricOffsetZ: 0,
   lyricTiltX: 0,
   lyricTiltY: 0,
@@ -3333,7 +3333,7 @@ var PACKAGED_DEFAULT_FX_SNAPSHOT = Object.freeze({
   liveBackgroundKeep: false,
   particleLyrics: true,
   backCover: false,
-  shelf: 'side',
+  shelf: 'off',
   shelfCameraMode: 'static',
   shelfPresence: 'always',
   shelfShowPodcasts: false,
@@ -3379,6 +3379,11 @@ function readSavedPlaybackVisualPreset() {
 var playbackVisualPreset = readSavedPlaybackVisualPreset();
 var startupVisualPreviewActive = false;
 var fx = Object.assign({}, fxDefaults, readSavedLyricLayout());
+if (localStorage.getItem('mineradio-cover-density-migrated-v1') !== '1' && Number(fx.coverResolution) >= 1.54) {
+  fx.coverResolution = fxDefaults.coverResolution;
+  localStorage.setItem('mineradio-cover-density-migrated-v1', '1');
+  saveLyricLayout();
+}
 normalizeDevelopmentLockedFxState();
 var presetTransition = { active:false, start:-10, duration:0.92, from:0, to:0 };
 var controlsAutoHide = readBooleanPreference(CONTROLS_AUTO_HIDE_STORE_KEY, false);
@@ -7500,7 +7505,7 @@ function rgbCss(c, a) {
 }
 function clampRange(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeCoverResolution(v) {
-  return clampRange(Number(v) || 1, 0.75, 1.55);
+  return clampRange(Number(v) || 1, 0.75, 2);
 }
 function normalizePerformanceBackgroundMode(v, liveKeepFallback) {
   var value = String(v || '');
@@ -7514,7 +7519,7 @@ function normalizePerformanceQuality(v) {
 }
 function coverParticleGridForResolution(v) {
   var grid = Math.round(118 * normalizeCoverResolution(v));
-  grid = Math.max(88, Math.min(183, grid));
+  grid = Math.max(88, Math.min(237, grid));
   return grid % 2 ? grid : grid + 1;
 }
 function coverParticleCountLabel(v) {
@@ -26517,6 +26522,12 @@ applyFxFabAutoHideState();
 applyControlsAutoHidePreference();
 applyDesktopLyricsState(false);
 applyWallpaperModeState(false);
+if (localStorage.getItem('mineradio-stage-lyric-y-migrated-v1') !== '1' && Math.abs(Number(fx.lyricOffsetY) || 0) < 0.001) {
+  fx.lyricOffsetY = fxDefaults.lyricOffsetY;
+  localStorage.setItem('mineradio-stage-lyric-y-migrated-v1', '1');
+  saveLyricLayout();
+}
+fx.shelf = 'off';
 setShelfMode(fx.shelf);
 applyStartupStarfieldPreset();
 applyPlaylistPanelPinState(false);
