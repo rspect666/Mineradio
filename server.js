@@ -3210,8 +3210,38 @@ function isNeteaseAuthInvalidPayload(payload) {
   const msg = normalizeApiMessage(payload);
   return /未登录|需要登录|请先登录|login/i.test(msg) && code >= 300;
 }
+function neteaseLoggedOutInfo(extra) {
+  return {
+    loggedIn: false,
+    vipType: 0,
+    vipLevel: 'none',
+    isVip: false,
+    isSvip: false,
+    vipLabel: '无VIP',
+    ...(extra || {}),
+  };
+}
+function hasNeteaseSessionCookie(cookieText) {
+  const obj = parseCookieString(cookieText);
+  return !!(obj.MUSIC_U || obj.MUSIC_A);
+}
+function pendingNeteaseLoginInfo() {
+  return {
+    loggedIn: true,
+    pendingProfile: true,
+    hasCookie: true,
+    userId: '',
+    nickname: '网易云用户',
+    avatar: '',
+    vipType: 0,
+    vipLevel: 'none',
+    isVip: false,
+    isSvip: false,
+    vipLabel: '无VIP',
+  };
+}
 async function getLoginInfo() {
-  if (!userCookie) return { loggedIn: false, vipType: 0, vipLevel: 'none', isVip: false, isSvip: false, vipLabel: '无VIP' };
+  if (!userCookie) return neteaseLoggedOutInfo();
 
   // login_status 对二维码 cookie 的资料刷新通常更及时；失败时再降级到 user_account。
   try {
@@ -3220,6 +3250,10 @@ async function getLoginInfo() {
     const data = body.data || body;
     const info = normalizeLoginInfo(data.profile || body.profile, data.account || body.account, data);
     if (info.loggedIn) return info;
+    if (isNeteaseAuthInvalidPayload(st)) {
+      saveCookie('');
+      return neteaseLoggedOutInfo({ hasCookie: false });
+    }
   } catch (e) {
     console.warn('[Login] login_status failed:', e.message);
   }
@@ -3229,11 +3263,16 @@ async function getLoginInfo() {
     const body = acc.body || {};
     const info = normalizeLoginInfo(body.profile, body.account, body);
     if (info.loggedIn) return info;
-    if (isNeteaseAuthInvalidPayload(acc)) saveCookie('');
-    return { loggedIn: false, hasCookie: !!userCookie, vipType: 0, vipLevel: 'none', isVip: false, isSvip: false, vipLabel: '无VIP' };
+    if (isNeteaseAuthInvalidPayload(acc)) {
+      saveCookie('');
+      return neteaseLoggedOutInfo({ hasCookie: false });
+    }
+    if (hasNeteaseSessionCookie(userCookie)) return pendingNeteaseLoginInfo();
+    return neteaseLoggedOutInfo({ hasCookie: !!userCookie });
   } catch (e) {
     console.warn('[Login] account check failed:', e.message);
-    return { loggedIn: false, hasCookie: !!userCookie, vipType: 0, vipLevel: 'none', isVip: false, isSvip: false, vipLabel: '无VIP' };
+    if (hasNeteaseSessionCookie(userCookie)) return pendingNeteaseLoginInfo();
+    return neteaseLoggedOutInfo({ hasCookie: !!userCookie });
   }
 }
 
