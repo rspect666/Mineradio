@@ -2657,6 +2657,7 @@ async function handleQQSongUrl(mid, mediaMid, qualityPreference) {
   const uin = qqCookieUin(cookieObj) || '0';
   const musicKey = qqCookieMusicKey(cookieObj);
   const playbackKey = qqCookiePlaybackKey(cookieObj);
+  const authKey = playbackKey || musicKey;
   const fileMediaMid = String(mediaMid || '').trim();
   const requestedQuality = normalizeQualityPreference(qualityPreference);
   const mediaIds = [];
@@ -2676,8 +2677,8 @@ async function handleQQSongUrl(mid, mediaMid, qualityPreference) {
     platform: '20',
   };
   if (filenames.length) param.filename = filenames;
-  const comm = { uin, format: 'json', ct: musicKey ? 19 : 24, cv: 0 };
-  if (musicKey) comm.authst = musicKey;
+  const comm = { uin, format: 'json', ct: authKey ? 19 : 24, cv: 0 };
+  if (authKey) comm.authst = authKey;
   const json = await qqMusicRequest({
     comm,
     req_0: {
@@ -2705,7 +2706,7 @@ async function handleQQSongUrl(mid, mediaMid, qualityPreference) {
     };
   }
   const restriction = classifyQQPlaybackRestriction(info, {
-    hasSession: !!(uin && musicKey),
+    hasSession: !!(uin && authKey),
     hasPlaybackKey: !!(uin && playbackKey),
   });
   return {
@@ -2713,7 +2714,7 @@ async function handleQQSongUrl(mid, mediaMid, qualityPreference) {
     url: '',
     playable: false,
     error: 'QQ_URL_UNAVAILABLE',
-    loggedIn: !!(uin && musicKey),
+    loggedIn: !!(uin && authKey),
     playbackKeyReady: !!(uin && playbackKey),
     restriction,
     reason: restriction.category,

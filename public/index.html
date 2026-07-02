@@ -18324,7 +18324,7 @@ function handlePlaybackUnavailable(song, data) {
     setTimeout(function(){
       var modal = document.getElementById('login-modal');
       if (!modal || modal.classList.contains('show')) return;
-      openProviderLogin(provider);
+      openProviderLogin(provider, { autoOpen: true });
     }, 520);
   }
 }
@@ -23275,7 +23275,7 @@ function providerVipBadge(provider, status, idAttr) {
 }
 function hasPlatformLogin(provider) {
   var st = platformStatus(provider);
-  if (provider === 'qq') return !!(st && st.loggedIn && st.playbackKeyReady);
+  if (provider === 'qq') return !!(st && st.loggedIn);
   return !!(st && st.loggedIn);
 }
 function hasAnyPlatformLogin() {
@@ -23783,11 +23783,13 @@ function enableDualAccountView() {
 function requestDualLoginMode() {
   enableDualAccountView();
 }
-function openProviderLogin(provider) {
+function openProviderLogin(provider, opts) {
+  opts = opts || {};
   provider = provider === 'qq' ? 'qq' : 'netease';
   closeUserModal();
   loginProvider = provider;
   showLoginModal({ provider: provider });
+  if (opts.autoOpen) setTimeout(openProviderWebLogin, 700);
 }
 async function logoutActiveAccount() {
   if (activeAccountProvider === 'qq') {
