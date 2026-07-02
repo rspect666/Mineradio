@@ -2403,7 +2403,7 @@ function mapQQPlaylistTrack(raw) {
     cover: qqAlbumCover(albumMid, 300),
     duration: (Number(track.interval || raw.interval) || 0) * 1000,
     fee: track.pay && Number(track.pay.pay_play) ? 1 : 0,
-    playable: false,
+    playable: true,
   };
 }
 
@@ -2518,7 +2518,7 @@ function mapQQSmartSong(item) {
     cover: '',
     duration: 0,
     fee: 0,
-    playable: false,
+    playable: true,
   };
 }
 
@@ -2548,7 +2548,7 @@ function mapQQTrack(track, fallback) {
     cover: qqAlbumCover(albumMid, 300) || fallback.cover || '',
     duration: (Number(track.interval) || 0) * 1000,
     fee: track.pay && Number(track.pay.pay_play) ? 1 : 0,
-    playable: false,
+    playable: true,
   };
 }
 
