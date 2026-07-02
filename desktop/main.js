@@ -587,9 +587,11 @@ async function openQQMusicLoginWindow(owner) {
       if (pollTimer) clearInterval(pollTimer);
       try {
         const cookie = await readQQLoginCookieHeader(cookieSession);
-        resolve(qqCookieHasLogin(cookie)
+        resolve(qqCookieHasPlaybackLogin(cookie)
           ? { ok: true, cookie }
-          : { ok: false, cancelled: true, message: 'QQ 登录窗口已关闭' });
+          : (qqCookieHasLogin(cookie)
+            ? { ok: false, partial: true, cookie, message: 'QQ 登录还缺少播放授权，请保持窗口打开到播放器页加载完成' }
+            : { ok: false, cancelled: true, message: 'QQ 登录窗口已关闭' }));
       } catch (e) {
         resolve({ ok: false, error: e.message || 'QQ 登录窗口已关闭' });
       }

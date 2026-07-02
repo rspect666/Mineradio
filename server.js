@@ -3521,8 +3521,8 @@ const server = http.createServer(async (req, res) => {
       const raw = body.cookie || body.data || body.text || '';
       const normalized = normalizeQQCookieInput(raw);
       const obj = parseCookieString(normalized);
-      if (!qqCookieUin(obj) || !qqCookieMusicKey(obj)) {
-        sendJSON(res, { provider: 'qq', loggedIn: false, error: 'INVALID_QQ_COOKIE', message: 'QQ cookie 缺少 uin 或有效登录票据' }, 400);
+      if (!qqCookieUin(obj) || !qqCookiePlaybackKey(obj)) {
+        sendJSON(res, { provider: 'qq', loggedIn: false, error: 'INVALID_QQ_COOKIE', message: 'QQ cookie 缺少 uin 或播放授权票据，请在官方登录窗口完成授权后再保存' }, 400);
         return;
       }
       saveQQCookie(normalized);

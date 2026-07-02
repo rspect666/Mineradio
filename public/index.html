@@ -23270,6 +23270,7 @@ function providerVipBadge(provider, status, idAttr) {
 }
 function hasPlatformLogin(provider) {
   var st = platformStatus(provider);
+  if (provider === 'qq') return !!(st && st.loggedIn && st.playbackKeyReady);
   return !!(st && st.loggedIn);
 }
 function hasAnyPlatformLogin() {
