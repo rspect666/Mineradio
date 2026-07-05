@@ -75,6 +75,12 @@
 
 ## 已完成工作日志
 
+### 2026-07-05
+
+- 修正歌曲搜索默认源选择：All 模式按登录态搜，QQ 已登录优先 QQ，只有网易云已登录时搜网易云，双平台登录时 QQ 结果优先；未登录时默认走 QQ，避免未登录网易云结果混入。
+- QQ 搜索从 smartbox 联想结果改为 QQ 音乐网页端 musicu 搜索列表，默认拉取 30 条，失败时才回退 smartbox。
+- 已运行 `node --check server.js` 和前端内联脚本解析；当前 `Documents\mineradio` 副本缺少 `NeteaseCloudMusicApi`，所以无法直接启动本地服务做完整接口回归。
+
 ### 2026-06-24
 
 - 将 `E:\Download\默认测试.json` 接入为首次启动默认用户存档和默认视觉参数；新增 `public/default-user-fx-archive.json`，并让没有本地用户存档的新用户自动得到「默认测试」槽位。

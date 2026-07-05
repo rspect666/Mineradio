@@ -2570,6 +2570,24 @@ async function qqSmartboxSearch(keywords, limit) {
   return (Array.isArray(items) ? items : []).slice(0, Math.max(1, Math.min(limit || 6, 10))).map(mapQQSmartSong);
 }
 
+async function qqWebSongSearch(keywords, limit) {
+  const num = Math.max(1, Math.min(parseInt(limit || '30', 10) || 30, 50));
+  const cookieObj = qqCookieObject();
+  const json = await qqMusicRequest({
+    comm: { ct: 19, cv: 1859, uin: qqCookieUin(cookieObj) || '0' },
+    req: {
+      module: 'music.search.SearchCgiService',
+      method: 'DoSearchForQQMusicDesktop',
+      param: { search_type: 0, query: keywords, page_num: 1, num_per_page: num },
+    },
+  }, { cookie: true });
+  const block = json && json.req;
+  if (!block || Number(block.code || 0) !== 0) throw new Error(block && (block.message || block.msg || block.code) || 'QQ_WEB_SEARCH_FAILED');
+  const data = block.data || {};
+  const list = data.body && data.body.song && data.body.song.list || data.song && data.song.list || [];
+  return (Array.isArray(list) ? list : []).map(raw => mapQQTrack(raw, {})).filter(song => song && song.name && (song.mid || song.id));
+}
+
 async function qqSongDetail(mid, fallback) {
   if (!mid) return fallback;
   const json = await qqMusicRequest({
@@ -2632,6 +2650,19 @@ async function handleQQSearch(keywords, limit) {
   const kw = String(keywords || '').trim();
   if (!kw) return [];
   console.log('[QQSearch]', kw, 'limit:', limit);
+  const seen = new Set();
+  const unique = songs => (songs || []).filter(song => {
+    const key = song && (song.mid || song.id || (song.name + '|' + song.artist));
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return !!song.name;
+  });
+  try {
+    const web = await qqWebSongSearch(kw, limit);
+    if (web.length) return unique(web);
+  } catch (e) {
+    console.warn('[QQSearch] web search failed:', e.message);
+  }
   const base = await qqSmartboxSearch(kw, limit);
   const detailed = await Promise.all(base.map(async item => {
     try { return await qqSongDetail(item.mid, item); }
@@ -2640,13 +2671,7 @@ async function handleQQSearch(keywords, limit) {
       return item;
     }
   }));
-  const seen = new Set();
-  return detailed.filter(song => {
-    const key = song && (song.mid || song.id || (song.name + '|' + song.artist));
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return !!song.name;
-  });
+  return unique(detailed);
 }
 
 async function handleQQSongUrl(mid, mediaMid, qualityPreference) {
@@ -3466,7 +3491,7 @@ const server = http.createServer(async (req, res) => {
   if (pn === '/api/qq/search') {
     try {
       const kw = url.searchParams.get('keywords') || '';
-      const limit = Math.max(4, Math.min(12, parseInt(url.searchParams.get('limit') || '8', 10) || 8));
+      const limit = Math.max(4, Math.min(50, parseInt(url.searchParams.get('limit') || '30', 10) || 30));
       const songs = await handleQQSearch(kw, limit);
       sendJSON(res, { provider: 'qq', songs });
     } catch (err) {
